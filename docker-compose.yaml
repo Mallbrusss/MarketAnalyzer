@@ -1,0 +1,29 @@
+version: "2.8"
+
+services:
+  app:
+    # image: service:local #if build before
+    build:
+      dockerfile: Dockerfile
+    container_name: app
+    # ports:
+    #   - "8080:8080"
+    depends_on:
+      - postgresql
+    networks:
+      - app
+
+  postgresql:
+    image: postgres:14-alpine
+    container_name: psql
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD${POSTGRES_PASSWORD}
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    networks:
+      - app
+
+networks:
+  app:

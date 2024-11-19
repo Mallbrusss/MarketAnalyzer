@@ -1,0 +1,15 @@
+@startuml
+actor User
+
+User --> API_Gateway : REST API Request
+API_Gateway --> Data_Ingestion_Service : Fetch market data
+API_Gateway --> Analysis_Service : Request analysis
+API_Gateway --> Visualization_Service : Request report
+
+Data_Ingestion_Service --> PostgreSQL : Save normalized data
+Analysis_Service --> PostgreSQL : Fetch market data
+Analysis_Service --> Redis : Cache analysis results
+Visualization_Service --> PostgreSQL : Fetch analysis results
+Visualization_Service --> Redis : Use cached data
+
+@enduml
