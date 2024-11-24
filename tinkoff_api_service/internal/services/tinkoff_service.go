@@ -3,13 +3,15 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"time"
+	"log"
 	"tinkoff-api/config"
 	"tinkoff-api/internal/kafka"
 	"tinkoff-api/internal/models"
 	"tinkoff-api/pkg/httpclient"
+	"tinkoff-api/pkg/split"
 )
 
+const ChunkSize = 1242880
 type TinkoffService struct {
 	Client        *httpclient.HTTPClient
 	Config        *config.Config
@@ -48,12 +50,9 @@ func (s *TinkoffService) GetClosePrices(instruments []string) ([]models.ClosePri
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	start := time.Now()
-	if err := s.KafkaProducer.SendMessage(s.KafkaProducer.Topic, respBody); err != nil {
+	if err := s.KafkaProducer.SendMessage("closePriceData", "closePrice", respBody); err != nil {
 		return nil, err
 	}
-
-	fmt.Println("Time taken for KafkaProducer.SendMessage:", time.Since(start))
 
 	return response.ClosePrices, nil
 }
@@ -72,20 +71,38 @@ func (s *TinkoffService) GetAllBonds(instrumentStatus string) ([]models.Placemen
 		return nil, err
 	}
 
+	fmt.Printf("Response body size: %d bytes\n", len(respBody))
+	chunks := split.SplitMessage(respBody, ChunkSize)
+	if len(chunks) == 0 {
+		log.Println("SplitMessage returned no chunks")
+	}
+	fmt.Printf("Total chunks: %d\n", len(chunks))
+
 	var response models.GetBondsResponse
 	if err := json.Unmarshal(respBody, &response); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
+	for num, chunk := range chunks {
+		log.Printf("Sending chunk %d, size: %d bytes", num, len(chunk))
+		key := fmt.Sprintf("allBonds:%d", num)
+		err := s.KafkaProducer.SendMessage("candlesData", key, chunk)
+		if err != nil {
+			log.Printf("Failed to send chunk %d: %v", num, err)
+			return nil, err
+		}
+	}
+
 	return response.Instruments, nil
 }
 
+//TODO: Оптимизировать эту функцию
 func (s *TinkoffService) GetCandles(instrumentInfo map[string]any) ([]models.HistoricCandle, error) {
 	reqBody := models.GetCandlesRequest{
-		Figi: instrumentInfo["figi"].(string),
-		From:  instrumentInfo["from"].(string),
-		To: instrumentInfo["to"].(string),
-		Interval: instrumentInfo["interval"].(string),
+		Figi:         instrumentInfo["figi"].(string),
+		From:         instrumentInfo["from"].(string),
+		To:           instrumentInfo["to"].(string),
+		Interval:     instrumentInfo["interval"].(string),
 		InstrumentId: instrumentInfo["instrumentId"].(string),
 	}
 
@@ -96,14 +113,32 @@ func (s *TinkoffService) GetCandles(instrumentInfo map[string]any) ([]models.His
 		"Content-Type":  "application/json",
 	}
 
-	respBody, err := s.Client.Post(url,headers,reqBody)
+	respBody, err := s.Client.Post(url, headers, reqBody)
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Printf("Response body size: %d bytes\n", len(respBody))
+	chunks := split.SplitMessage(respBody, ChunkSize)
+	if len(chunks) == 0 {
+		log.Println("SplitMessage returned no chunks")
+	}
+	fmt.Printf("Total chunks: %d\n", len(chunks))
+
 	var responce models.GetCandlesResponse
-	if err := json.Unmarshal(respBody, &responce); err != nil{
+	if err := json.Unmarshal(respBody, &responce); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
+
+	for num, chunk := range chunks {
+		log.Printf("Sending chunk %d, size: %d bytes", num, len(chunk))
+		key := fmt.Sprintf("allBonds:%s:%d", reqBody.InstrumentId, num)
+		err := s.KafkaProducer.SendMessage("candlesData", key, chunk)
+		if err != nil {
+			log.Printf("Failed to send chunk %d: %v", num, err)
+			return nil, err
+		}
+	}
+
 	return responce.Candles, nil
 }

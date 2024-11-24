@@ -8,12 +8,14 @@ import (
 
 type KafkaProducer struct {
 	Producer *kafka.Producer
-	Topic    string
 }
 
-func NewKafkaBroker(broker, topic string) (*KafkaProducer, error) {
+func NewKafkaBroker(broker string) (*KafkaProducer, error) {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": broker,
+		"bootstrap.servers":  broker,
+		"message.max.bytes":  5242880, // 5 МБ Fix this
+		"linger.ms":          0,
+		"batch.num.messages": 1,
 	})
 	if err != nil {
 		return nil, err
@@ -21,13 +23,13 @@ func NewKafkaBroker(broker, topic string) (*KafkaProducer, error) {
 
 	return &KafkaProducer{
 		Producer: p,
-		Topic:    topic,
 	}, nil
 }
 
-func (kp *KafkaProducer) SendMessage(key string, value []byte) error {
+func (kp *KafkaProducer) SendMessage(topic, key string, value []byte) error {
+	log.Printf("Sending message to Kafka. Topic: %s, Key: %s, Value size: %d bytes", topic, key, len(value))
 	msg := &kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &kp.Topic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Key:            []byte(key),
 		Value:          value,
 	}
@@ -38,6 +40,7 @@ func (kp *KafkaProducer) SendMessage(key string, value []byte) error {
 		return err
 	}
 
+	log.Printf("The message was successfully sent to Kafka. Topic: %s, Key: %s", topic, key)
 	return nil
 }
 

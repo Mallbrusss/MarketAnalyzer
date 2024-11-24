@@ -45,7 +45,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 func (s *Server) initKafka() {
 	kafkaBroker := fmt.Sprintf("%s:%s", s.cfg.KafkaBrokerHOST, s.cfg.KafkaBrokerPORT)
 
-	producer, err := kafka.NewKafkaBroker(kafkaBroker, "data-ingestion")
+	producer, err := kafka.NewKafkaBroker(kafkaBroker)
 	if err != nil {
 		log.Fatalf("Error init kafka broker: %s", err)
 	}
