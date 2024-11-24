@@ -1,0 +1,275 @@
+openapi: 3.0.3
+info:
+  title: Tinkoff API Service
+  description: API для взаимодействия с Tinkoff Invest API, предоставляющий доступ к рыночным данным.
+  version: 1.0.0
+
+# servers:
+#   - url: http://localhost:8080
+#     description: Локальный сервер
+#   - url: https://tinkoff-api-service.example.com
+#     description: Продакшен сервер
+
+paths:
+  /api/v1/getClosePrices:
+    get:
+      summary: Получить цены закрытия по инструментам
+      description: Метод возвращает цены закрытия торговой сессии для заданных инструментов.
+      # security:
+      #   - bearerAuth: []
+      
+      requestBody:
+        description: Список идентификаторов инструментов для получения данных о ценах закрытия.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instruments:
+                  type: array
+                  description: Список идентификаторов инструментов.
+                  items:
+                    type: object
+                    properties:
+                      instrumentId:
+                        type: string
+                        description: Идентификатор инструмента.
+              required:
+                - instruments
+      
+      responses:
+        '200':
+          description: Успешный ответ с данными о ценах закрытия.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  closePrices:
+                    type: array
+                    description: Цены закрытия для заданных инструментов
+                    items:
+                      type: object
+                      properties:
+                        figi:
+                          type: string
+                          description: Идентификатор инструмента (FIGI).
+                        instrumentUid:
+                          type: string
+                          description: Уникальный идентификатор инструмента.
+                        price:
+                          type: object
+                          description: Цена закрытия инструмента.
+                          properties:
+                            units:
+                              type: integer
+                              description: Целая часть суммы.
+                            nano:
+                              type: integer
+                              description: Дробная часть суммы.
+                        eveningSessionPrice:
+                          type: object
+                          description: Цена закрытия вечерней сессии.
+                          properties:
+                            units:
+                              type: integer
+                              description: Целая часть суммы.
+                            nano:
+                              type: integer
+                              description: Дробная часть суммы.
+                        time:
+                          type: string
+                          format: date-time
+                          description: Время получения данных.
+        '400':
+          description: Некорректный запрос.
+        '500':
+          description: Ошибка сервера.
+  /api/v1/getBonds:
+    get:
+      summary: Получить все котировки облигаций
+      description: Метод возвращает данные о всех облигациях.
+      # security:
+      #   - bearerAuth: []
+      responses:
+        '200':
+          description: Успешный ответ с данными о котировках облигаций.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bonds:
+                    type: array
+                    description: Список всех облигаций
+                    items:
+                      $ref: '#/components/schemas/Bond'
+        '401':
+          description: Отказано в доступе. Необходим токен авторизации.
+        '500':
+          description: Ошибка сервера.
+  /api/v1/getCandles:
+    get:
+      summary: Получить все котировки облигаци за промежуток
+      description: Метод возвращает все котировки свечей за указанный промежуток времени с указанным интервалом (см документацию).
+      requestBody:
+        description: Список для запроса исторических свечей.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                figi:
+                  type: string
+                  description: Идентификатор инструмента.                
+                from:
+                  type: string
+                  description: Идентификатор инструмента.                
+                to:
+                  type: string
+                  description: Идентификатор инструмента.                
+                interval:
+                  type: string
+                  description: Идентификатор инструмента.                
+                instrumentId:
+                  type: string
+                  description: Идентификатор инструмента.
+              required:
+                - figi
+                - from
+                - to
+                - interval
+                - instrumentId
+      responses:
+        '200':
+          description: Успешный ответ с данными о свечах.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  volume:
+                    type: string
+                    description: Объем торгов в лотах
+                  high:
+                    type: object
+                    description: Максимальная цена за 1 инструмент.
+                    properties:
+                      units:
+                        type: integer
+                        description: Целая часть суммы.
+                      nano:
+                        type: integer
+                        description: Дробная часть суммы.
+                  low:
+                    type: object
+                    description: Минимальная цена за 1 инструмент
+                    properties:
+                      units:
+                        type: integer
+                        description: Целая часть суммы.
+                      nano:
+                        type: integer
+                        description: Дробная часть суммы.
+                  time: 
+                    type: string
+                    description: Время свечи в часовом поясе UTC.
+                  close:
+                    type: object
+                    description: Цена закрытия за 1 инструмент.
+                    properties:
+                      units:
+                        type: integer
+                        description: Целая часть суммы.
+                      nano:
+                        type: integer
+                        description: Дробная часть суммы.
+                  open:
+                    type: object
+                    description: Цена открытия за 1 инструмент. 
+                    properties:
+                      units:
+                        type: integer
+                        description: Целая часть суммы.
+                      nano:
+                        type: integer
+                        description: Дробная часть суммы.
+                  isComplite:
+                    type: boolean
+                    description: Признак завершённости свечи. false значит, свеча за текущие интервал ещё сформирована не полностью.
+        '401':
+          description: Отказано в доступе. Необходим токен авторизации.
+        '500':
+          description: Ошибка сервера.
+components:
+  # securitySchemes:
+  #   bearerAuth:
+  #     type: http
+  #     scheme: bearer
+  schemas:
+    InstrumentRequest:
+      type: object
+      properties:
+        instrumentId:
+          type: string
+          description: Идентификатор инструмента.
+    ClosePricesResponse:
+      type: object
+      properties:
+        closePrices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClosePrice'
+    ClosePrice:
+      type: object
+      properties:
+        figi:
+          type: string
+          description: Идентификатор инструмента (FIGI).
+        instrumentUid:
+          type: string
+          description: Уникальный идентификатор инструмента.
+        price:
+          type: object
+          properties:
+            units:
+              type: integer
+            nano:
+              type: integer
+        eveningSessionPrice:
+          type: object
+          properties:
+            units:
+              type: integer
+            nano:
+              type: integer
+        time:
+          type: string
+          format: date-time
+    Bond:
+        type: object
+        properties:
+          figi:
+            type: string
+            description: Идентификатор инструмента (FIGI).
+          instrumentUid:
+            type: string
+            description: Уникальный идентификатор инструмента.
+          ticker:
+            type: string
+            description: Тикер инструмента.
+          name:
+            type: string
+            description: Название инструмента.
+          price:
+            type: object
+            description: Цена инструмента.
+            properties:
+              units:
+                type: integer
+                description: Целая часть цены.
+              nano:
+                type: integer
+                description: Дробная часть цены.

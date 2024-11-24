@@ -1,21 +1,38 @@
 package main
 
 import (
+	"context"
 	"log"
-	"net/http"
-	"tinkoff-api/config"
-	"tinkoff-api/internal/handlers"
-	"tinkoff-api/internal/services"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+	"tinkoff-api/internal/server"
 )
 
 func main() {
-	cfg := config.LoadConfig()
+	log.Println("Starting server...")
+	serv := server.NewServer()
 
-	service := services.NewTinkoffService(cfg)
-	handler := handlers.NewHandler(service)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
-	http.HandleFunc("/api/v1/closePrices", handler.GetClosePricesHandler)
+	go func() {
+		if err := serv.Run(); err != nil {
+			log.Print(err)
+		}
+	}()
 
-	log.Printf("Server is running on port %s...", cfg.ServerPort)
-	log.Fatal(http.ListenAndServe(":"+cfg.ServerPort, nil))
+	<-quit
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := serv.Shutdown(ctx); err != nil {
+		log.Fatalf("Graceful shutdown failed: %v", err)
+	}
+	
+
+	log.Println("Server stopped")
 }
