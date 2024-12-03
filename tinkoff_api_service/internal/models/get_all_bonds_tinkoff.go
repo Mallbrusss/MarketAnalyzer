@@ -73,3 +73,10 @@ type brand struct {
 	logoBaseColor string
 	textColor     string
 }
+
+type InstrumentPart struct {
+	MessageID string `json:"message_id"`
+	Part      int    `json:"part"`
+	Total     int    `json:"total"`
+	Data      []byte `json:"data"`
+}

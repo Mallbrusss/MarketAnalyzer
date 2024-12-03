@@ -9,7 +9,7 @@ import (
 
 type StockExchange interface {
 	GetClosePrices(instruments []string) ([]models.ClosePrice, error)
-	GetAllBonds(instrumentStatus string) ([]models.PlacementPrice, error)
+	GetAllInstruments(instrumentStatus string) ([]models.PlacementPrice, error)
 	GetCandles(instrumentInfo map[string]any) ([]models.HistoricCandle, error)
 }
 
@@ -56,8 +56,7 @@ func (h *Handler) GetClosePricesHandler(c echo.Context) error {
 func (h *Handler) GetAllBonds(c echo.Context) error {
 	c.Request().Header.Set("Content-Type", "application/json")
 
-	//TODO: Change this func param
-	allBonds, err := h.Service.GetAllBonds("INSTRUMENT_STATUS_BASE")
+	allBonds, err := h.Service.GetAllInstruments("INSTRUMENT_STATUS_BASE")
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"error": "Failed to fetch all bonds",
