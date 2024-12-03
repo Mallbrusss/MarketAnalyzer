@@ -34,9 +34,19 @@ func InitDB(host, user, password, dBname, port string) (*gorm.DB, error) {
 		log.Println("error migrate Candle table")
 	}
 
-	err = db.AutoMigrate(&models.Instrument{})
+	err = db.AutoMigrate(&models.PlacementPrice{})
 	if err != nil {
-		log.Println("error migrate Instrument table")
+		log.Println("error migrate placementPrice table")
+	}
+
+	err = db.AutoMigrate(&models.Nominal{})
+	if err != nil {
+		log.Println("error migrate nominal table")
+	}
+
+	err = db.AutoMigrate(&models.MinPriceIncrement{})
+	if err != nil {
+		log.Println("error migrate minPriceIncrement table")
 	}
 
 	log.Println("Success connect to Postgres")

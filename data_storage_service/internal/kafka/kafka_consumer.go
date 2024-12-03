@@ -1,9 +1,11 @@
 package kafka
 
 import (
+	"bytes"
 	"data-storage/internal/models"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -11,18 +13,28 @@ import (
 	"log"
 )
 
-type KafkaConsumer struct {
-	Consumer *kafka.Consumer
-
-	mu           sync.Mutex
-	messageParts map[string][]byte
+type InstrumentRepositoryInterface interface {
+	CreateInstruments(instruments []models.PlacementPrice) error
 }
 
-func NewKafkaConsumer(broker, groupID string) (*KafkaConsumer, error) {
+type KafkaConsumer struct {
+	Consumer              *kafka.Consumer
+	mu                    sync.Mutex
+	recieveInstrumentPart []models.InstrumentPart
+	ir                    InstrumentRepositoryInterface
+}
+
+// type MessageAssembly struct {
+// 	TotalParts int
+// 	Received   int
+// 	Data       []byte
+// }
+
+func NewKafkaConsumer(broker, groupID string, ir InstrumentRepositoryInterface) (*KafkaConsumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": broker,
 		"message.max.bytes": 5242880, // 5 МБ Fix this
-		"group.id":          "groupID",
+		"group.id":          "candles",
 		"auto.offset.reset": "earliest",
 	})
 
@@ -31,7 +43,9 @@ func NewKafkaConsumer(broker, groupID string) (*KafkaConsumer, error) {
 	}
 
 	return &KafkaConsumer{
-		Consumer: c,
+		Consumer:              c,
+		ir:                    ir,
+		recieveInstrumentPart: make([]models.InstrumentPart, 0),
 	}, nil
 }
 
@@ -52,7 +66,7 @@ func (kc *KafkaConsumer) ListenAndProcess() {
 			continue
 		}
 
-		log.Printf("Received message from topic %s: %s", *msg.TopicPartition.Topic, msg.Value)
+		// log.Printf("Received message from topic %s: %s", *msg.TopicPartition.Topic, msg.Value)
 
 		switch *msg.TopicPartition.Topic {
 		case "candlesData":
@@ -106,23 +120,67 @@ func (kc *KafkaConsumer) handleInstruments(msg *kafka.Message) error {
 	kc.mu.Lock()
 	defer kc.mu.Unlock()
 
-	if _, exists := kc.messageParts[part.MessageID]; !exists {
-		kc.messageParts[part.MessageID] = make([]byte, 0)
+	kc.recieveInstrumentPart = append(kc.recieveInstrumentPart, part)
+
+	if kc.isMessageComplete(kc.recieveInstrumentPart, part.Total) {
+		fmt.Println("I`m here")
+		data, err := kc.buildAllData(kc.recieveInstrumentPart)
+		if err != nil {
+			return fmt.Errorf("failed to build complete message: %w", err)
+		}
+
+		fmt.Println("not, I`m here")
+		if err := kc.processCompleteMessage(data); err != nil {
+			log.Printf("failed to process complete message: %s", err)
+			return fmt.Errorf("failed to process complete message: %w", err)
+		}
+		fmt.Println("not, not, I`m here")
 	}
 
-	kc.messageParts[part.MessageID] = append(kc.messageParts[part.MessageID], part.Data...)
-
-	fmt.Println(kc.messageParts)
-
-	// Вставка в базу данных
-	// for _, candle := range candles {
-	// 	// Сохраняем каждую свечу в базу данных
-	// 	err := kc.saveCandleToDB(candle)
-	// 	if err != nil {
-	// 		log.Printf("Failed to save candle %v: %v", candle, err)
-	// 		return err
-	// 	}
-	// }
-
+	// kc.Consumer.CommitMessage(msg)
 	return nil
+}
+
+func (kc *KafkaConsumer) buildAllData(ip []models.InstrumentPart) ([]byte, error) {
+	sort.Slice(ip, func(i, j int) bool {
+		return ip[i].Part < ip[j].Part
+	})
+
+	var allData bytes.Buffer
+
+	for _, part := range ip {
+		_, err := allData.Write(part.Data)
+		if err != nil {
+			log.Println("Error build all data")
+			return nil, err
+		}
+	}
+
+	return allData.Bytes(), nil
+}
+
+func (kc *KafkaConsumer) processCompleteMessage(msg []byte) error {
+	log.Println("Processing complete message")
+
+	var instruments models.Instruments
+	if err := json.Unmarshal(msg, &instruments); err != nil {
+		return fmt.Errorf("failed to unmarshal complete message: %w", err)
+	}
+
+	if err := kc.ir.CreateInstruments(instruments.Instruments); err != nil {
+		return fmt.Errorf("failed to save message to database: %w", err)
+	}
+
+	log.Println("Message successfully processed and saved")
+	return nil
+}
+
+func (kc *KafkaConsumer) isMessageComplete(ip []models.InstrumentPart, totalParts int) bool {
+	if len(ip) != totalParts {
+		fmt.Println("false")
+		return false
+	}
+
+	fmt.Println("true")
+	return true
 }

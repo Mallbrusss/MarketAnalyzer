@@ -4,14 +4,13 @@ import (
 	"context"
 	"data-storage/config"
 	"data-storage/internal/kafka"
+	"data-storage/internal/repository"
 	"data-storage/internal/storage/timescale"
 	"fmt"
 	"log"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-
-	// "github.com/redis/go-redis"
 	"gorm.io/gorm"
 )
 
@@ -34,11 +33,16 @@ func (s *Server) initializeDatabase() error {
 	db, err := timescale.InitDB(s.cfg.PostgresHost, s.cfg.PostgresUser,
 		s.cfg.PostgresPassword, s.cfg.PostgresDatabase, s.cfg.PostgresPort)
 	if err != nil {
+		log.Fatal(err)
 		return err
 	}
 
 	s.db = db
 	return nil
+}
+
+func (s *Server) initializeRepository(db *gorm.DB) *repository.InstrumentRepository {
+	return repository.NewInstrumentRepository(db)
 }
 
 func (s *Server) initializeRedis() error {
@@ -55,11 +59,11 @@ func (s *Server) initializeMiddleware() {
 	s.e.Use(middleware.Recover())
 }
 
-func (s *Server) initKafka() {
+func (s *Server) initializeKafka(repository *repository.InstrumentRepository) {
 	kafkaBroker := fmt.Sprintf("%s:%s", s.cfg.KafkaBrokerHOST, s.cfg.KafkaBrokerPORT)
 	groupID := "dataProcessorGroup"
 
-	consumer, err := kafka.NewKafkaConsumer(kafkaBroker, groupID)
+	consumer, err := kafka.NewKafkaConsumer(kafkaBroker, groupID, repository)
 	if err != nil {
 		log.Fatalf("Error init kafka broker: %s", err)
 	}
@@ -72,7 +76,7 @@ func (s *Server) startKafka() {
 }
 
 func (s *Server) registerRoutes() {
-	
+
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
@@ -80,9 +84,16 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) Run() error {
-	s.initializeDatabase()
+	log.Println("Init database")
+	err := s.initializeDatabase()
+	if err != nil{
+		log.Println("Database initialization error")
+	}
+	log.Println("Database init success")
 
-	s.initKafka()
+	repository := s.initializeRepository(s.db)
+
+	s.initializeKafka(repository)
 	s.startKafka()
 
 	s.initializeMiddleware()

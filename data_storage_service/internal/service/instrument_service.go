@@ -2,24 +2,23 @@ package service
 
 import (
 	"data-storage/internal/models"
-	"data-storage/internal/repository"
 )
 
 type InstrumentRepository interface {
-	CreateInstruments(instruments []models.Instrument) error
+	CreateInstruments(instruments []models.PlacementPrice) error
 }
 
 type InstrumentService struct {
 	instrumentRepository InstrumentRepository
 }
 
-func NewInstrumentService(instrumentRepository *repository.InstrumentRepository) *InstrumentService {
+func NewInstrumentService(instrumentRepository InstrumentRepository) *InstrumentService {
 	return &InstrumentService{
 		instrumentRepository: instrumentRepository,
 	}
 }
 
-func (is *InstrumentService) CreateInstruments(instruments []models.Instrument) error {
+func (is *InstrumentService) CreateInstruments(instruments []models.PlacementPrice) error {
 	err := is.instrumentRepository.CreateInstruments(instruments)
 	if err != nil {
 		return err
