@@ -15,13 +15,14 @@ import (
 
 type InstrumentRepositoryInterface interface {
 	CreateInstruments(instruments []models.PlacementPrice) error
+	CreateCandles(instruments []models.HistoricCandle) error
 }
 
 type KafkaConsumer struct {
-	Consumer              *kafka.Consumer
-	mu                    sync.Mutex
-	recieveInstrumentPart []models.InstrumentPart
-	ir                    InstrumentRepositoryInterface
+	Consumer                                  *kafka.Consumer
+	mu                                        sync.Mutex
+	recieveInstrumentPart, recieveCandlesPart []models.InstrumentPart
+	ir                                        InstrumentRepositoryInterface
 }
 
 // type MessageAssembly struct {
@@ -85,25 +86,57 @@ func (kc *KafkaConsumer) ListenAndProcess() {
 }
 
 func (kc *KafkaConsumer) handleCandlesData(msg *kafka.Message) error {
-	var candles models.HistoricCandles
+	var part models.InstrumentPart
 
-	err := json.Unmarshal(msg.Value, &candles)
+	err := json.Unmarshal(msg.Value, &part)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal message: %w", err)
 	}
 
-	log.Printf("Received %d candles to process", len(candles.Candles))
+	log.Printf("Received part %d/%d for message ID %s", part.Part, part.Total, part.MessageID)
 
-	// Вставка в базу данных
-	// for _, candle := range candles {
-	// 	// Сохраняем каждую свечу в базу данных
-	// 	err := kc.saveCandleToDB(candle)
-	// 	if err != nil {
-	// 		log.Printf("Failed to save candle %v: %v", candle, err)
-	// 		return err
-	// 	}
-	// }
+	kc.mu.Lock()
+	defer kc.mu.Unlock()
 
+	kc.recieveCandlesPart = append(kc.recieveCandlesPart, part)
+	if len(kc.recieveCandlesPart) == 0 {
+		log.Println("Recieve message is nil")
+	}
+
+	if kc.isMessageComplete(kc.recieveCandlesPart, part.Total) {
+		data, err := kc.buildAllData(kc.recieveCandlesPart)
+		if err != nil {
+			log.Printf("failed to build complete message: %s", err)
+			return err
+		}
+
+		if err := kc.processCompleteMessageCandles(data); err != nil {
+			log.Printf("failed to process complete message: %s", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (kc *KafkaConsumer) processCompleteMessageCandles(msg []byte) error {
+	log.Println("Processing complete message Candles")
+
+	var candles models.HistoricCandles
+	fmt.Println("Ошибка дальше")
+	if err := json.Unmarshal(msg, &candles); err != nil {
+		log.Printf("failed to unmarshal complete message: %s", err)
+		return err
+	}
+
+	fmt.Println("Ошибка дальше")
+	if err := kc.ir.CreateCandles(candles.Candles); err != nil {
+		log.Printf("failed to save message to database: %s", err)
+		return err
+	}
+
+	fmt.Println("Ошибка ранее")
+	log.Println("Message successfully processed and saved")
 	return nil
 }
 
@@ -123,30 +156,27 @@ func (kc *KafkaConsumer) handleInstruments(msg *kafka.Message) error {
 	kc.recieveInstrumentPart = append(kc.recieveInstrumentPart, part)
 
 	if kc.isMessageComplete(kc.recieveInstrumentPart, part.Total) {
-		fmt.Println("I`m here")
 		data, err := kc.buildAllData(kc.recieveInstrumentPart)
 		if err != nil {
-			return fmt.Errorf("failed to build complete message: %w", err)
+			log.Printf("failed to build complete message: %s", err)
+			return err
 		}
 
-		fmt.Println("not, I`m here")
-		if err := kc.processCompleteMessage(data); err != nil {
+		if err := kc.processCompleteMessageInstruments(data); err != nil {
 			log.Printf("failed to process complete message: %s", err)
-			return fmt.Errorf("failed to process complete message: %w", err)
+			return err
 		}
-		fmt.Println("not, not, I`m here")
 	}
 
-	// kc.Consumer.CommitMessage(msg)
 	return nil
 }
 
 func (kc *KafkaConsumer) buildAllData(ip []models.InstrumentPart) ([]byte, error) {
+	var allData bytes.Buffer
+
 	sort.Slice(ip, func(i, j int) bool {
 		return ip[i].Part < ip[j].Part
 	})
-
-	var allData bytes.Buffer
 
 	for _, part := range ip {
 		_, err := allData.Write(part.Data)
@@ -159,8 +189,8 @@ func (kc *KafkaConsumer) buildAllData(ip []models.InstrumentPart) ([]byte, error
 	return allData.Bytes(), nil
 }
 
-func (kc *KafkaConsumer) processCompleteMessage(msg []byte) error {
-	log.Println("Processing complete message")
+func (kc *KafkaConsumer) processCompleteMessageInstruments(msg []byte) error {
+	log.Println("Processing complete message Instruments")
 
 	var instruments models.Instruments
 	if err := json.Unmarshal(msg, &instruments); err != nil {

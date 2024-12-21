@@ -89,8 +89,8 @@ func (h *Handler) GetCandles(c echo.Context) error {
 			"error": "Failed to fetch all candles",
 		})
 	}
-
+	
 	return c.JSON(http.StatusOK, echo.Map{
-		req.InstrumentId: candles,
+		"candles": candles,
 	})
 }

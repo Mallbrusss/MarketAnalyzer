@@ -38,12 +38,13 @@ type GetCandlesRequest struct {
 }
 
 type HistoricCandle struct {
-	Volume string    `json:"volume"`
-	High   High      `json:"high"`
-	Low    Low       `json:"low"`
-	Time   time.Time `json:"time"`
-	Close  Close     `json:"close"`
-	Open   Open      `json:"open"`
+	InstrumentId string    `json:"instrumentID"`
+	Volume       string    `json:"volume"`
+	High         High      `json:"high"`
+	Low          Low       `json:"low"`
+	Time         time.Time `json:"time"`
+	Close        Close     `json:"close"`
+	Open         Open      `json:"open"`
 }
 
 type High struct {
@@ -67,5 +68,5 @@ type Open struct {
 }
 
 type GetCandlesResponse struct {
-	Candles []HistoricCandle `json:"candles"`
+	Candles      []HistoricCandle `json:"candles"`
 }
