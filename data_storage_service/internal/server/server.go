@@ -6,8 +6,11 @@ import (
 	"data-storage/internal/kafka"
 	"data-storage/internal/repository"
 	"data-storage/internal/storage/timescale"
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -83,10 +86,33 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.e.Shutdown(ctx)
 }
 
+func (s *Server) downloadInstruments() error {
+	client := http.Client{
+		Timeout: 10 * time.Second,
+	}
+	req, err := http.NewRequest("GET", "http://localhost:8080/api/v1/getBonds", nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("non-200 status code received")
+	}
+	return nil
+}
+
 func (s *Server) Run() error {
 	log.Println("Init database")
 	err := s.initializeDatabase()
-	if err != nil{
+	if err != nil {
 		log.Println("Database initialization error")
 	}
 	log.Println("Database init success")
@@ -98,6 +124,10 @@ func (s *Server) Run() error {
 
 	s.initializeMiddleware()
 	s.registerRoutes()
+	err = s.downloadInstruments()
+	if err != nil {
+		log.Printf("can`t download instruments: %s", err)
+	}
 
 	address := fmt.Sprintf(":%s", s.cfg.ServerPort)
 	return s.e.Start(address)
