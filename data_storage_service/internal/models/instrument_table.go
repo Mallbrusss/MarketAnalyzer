@@ -30,7 +30,7 @@ type PlacementPrice struct {
 	ShareType             string            `json:"shareType" gorm:"type:VARCHAR(100)"`          // Тип акции
 	MinPriceIncrement     MinPriceIncrement `json:"minPriceIncrement" gorm:"-"`                  // Внешний ключ
 	ApiTradeAvailableFlag bool              `json:"apiTradeAvailableFlag" gorm:"type:BOOLEAN"`   // API-доступность
-	Uid                    string            `json:"uid" gorm:"primaryKey;type:VARCHAR(255)"`     // Первичный ключ
+	Uid                   string            `json:"uid" gorm:"primaryKey;type:VARCHAR(255)"`     // Первичный ключ
 	RealExchange          string            `json:"realExchange" gorm:"type:VARCHAR(100)"`       // Реальная биржа
 	PositionUid           string            `json:"positionUid" gorm:"type:VARCHAR(255)"`        // UID позиции
 	AssetUid              string            `json:"assetUid" gorm:"type:VARCHAR(255)"`           // UID актива
@@ -75,4 +75,9 @@ type InstrumentPart struct {
 	Part      int    `json:"part"`
 	Total     int    `json:"total"`
 	Data      []byte `json:"data"`
+}
+
+type Ids struct {
+	Uid  string `json:"uid"`
+	Figi string `json:"figi"`
 }

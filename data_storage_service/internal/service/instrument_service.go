@@ -25,3 +25,11 @@ func (is *InstrumentService) CreateInstruments(instruments []models.PlacementPri
 	}
 	return nil
 }
+
+func (is *InstrumentService) CreateCandles(candles []models.HistoricCandle) error {
+	err := is.CreateCandles(candles)
+	if err != nil {
+		return err
+	}
+	return nil
+}

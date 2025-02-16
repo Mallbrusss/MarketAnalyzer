@@ -35,7 +35,7 @@ func NewKafkaConsumer(broker, groupID string, ir InstrumentRepositoryInterface) 
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": broker,
 		"message.max.bytes": 5242880, // 5 МБ Fix this
-		"group.id":          "candles",
+		"group.id":          groupID,
 		"auto.offset.reset": "earliest",
 	})
 
@@ -123,19 +123,16 @@ func (kc *KafkaConsumer) processCompleteMessageCandles(msg []byte) error {
 	log.Println("Processing complete message Candles")
 
 	var candles models.HistoricCandles
-	fmt.Println("Ошибка дальше")
 	if err := json.Unmarshal(msg, &candles); err != nil {
 		log.Printf("failed to unmarshal complete message: %s", err)
 		return err
 	}
 
-	fmt.Println("Ошибка дальше")
 	if err := kc.ir.CreateCandles(candles.Candles); err != nil {
 		log.Printf("failed to save message to database: %s", err)
 		return err
 	}
 
-	fmt.Println("Ошибка ранее")
 	log.Println("Message successfully processed and saved")
 	return nil
 }
@@ -198,6 +195,22 @@ func (kc *KafkaConsumer) processCompleteMessageInstruments(msg []byte) error {
 	}
 
 	if err := kc.ir.CreateInstruments(instruments.Instruments); err != nil {
+		return fmt.Errorf("failed to save message to database: %w", err)
+	}
+
+	log.Println("Message successfully processed and saved")
+	return nil
+}
+
+func (kc *KafkaConsumer) processCompleteMessageBonds(msg []byte) error {
+	log.Println("Processing complete message Instruments")
+
+	var candles []models.HistoricCandle
+	if err := json.Unmarshal(msg, &candles); err != nil {
+		return fmt.Errorf("failed to unmarshal complete message: %w", err)
+	}
+
+	if err := kc.ir.CreateCandles(candles); err != nil {
 		return fmt.Errorf("failed to save message to database: %w", err)
 	}
 

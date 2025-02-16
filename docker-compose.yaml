@@ -1,24 +1,24 @@
 version: "2.8"
 
 services:
-  timescaledb:
-    image: timescale/timescaledb:latest-pg14
-    restart: always
-    ports:
-      - 5432:5432
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - ./data/timescaledb:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD", "pg_isready", "-q", "-d", "timescale", "-U", '${POSTGRES_USER}']
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    # networks:
-    #   - app
+#  timescaledb:
+#    image: timescale/timescaledb:latest-pg14
+#    restart: always
+#    ports:
+#      - 5432:5432
+#    environment:
+#      - POSTGRES_DB=${POSTGRES_DB}
+#      - POSTGRES_USER=${POSTGRES_USER}
+#      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+#    volumes:
+#      - ./data/timescaledb:/var/lib/postgresql/data
+#    healthcheck:
+#      test: ["CMD", "pg_isready", "-q", "-d", "timescale", "-U", '${POSTGRES_USER}']
+#      interval: 5s
+#      timeout: 5s
+#      retries: 5
+#    # networks:
+#    #   - app
 
   kafka:
       image: docker.io/bitnami/kafka:3.9

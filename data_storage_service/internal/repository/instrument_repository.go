@@ -2,6 +2,7 @@ package repository
 
 import (
 	"data-storage/internal/models"
+	"fmt"
 	"log"
 
 	"gorm.io/gorm"
@@ -101,4 +102,28 @@ func (ir *InstrumentRepository) CreateCandles(candles []models.HistoricCandle) e
 
 	log.Println("Candles create success")
 	return nil
+}
+
+func (ir *InstrumentRepository) GetInstrumentUIDAndFigi(ticker string) (models.Ids, error) {
+	var ids models.Ids
+	err := ir.db.Model(&models.PlacementPrice{}).Select("uid", "figi").Where("ticker=?", ticker).Scan(&ids).Error
+	if err != nil || ids.Uid == "" && ids.Figi == "" {
+		err = gorm.ErrRecordNotFound
+		log.Printf("failed to Get InstrumentID: %v", err)
+		return ids, err
+	}
+	return ids, nil
+}
+
+func (ir *InstrumentRepository) GetCandles(instrumentUID string) ([]models.HistoricCandle, error) {
+	var candles []models.HistoricCandle
+	err := ir.db.Model(&models.HistoricCandle{}).Where("instrument_id=?", instrumentUID).Find(&candles).Error
+	fmt.Println("err2: ", err)
+	if err != nil || len(candles) == 0 {
+		err = gorm.ErrRecordNotFound
+		log.Printf("no candles found for instrument UID: %s", instrumentUID)
+		log.Printf("failed to Get Candles: %v", err)
+		return nil, err
+	}
+	return candles, nil
 }

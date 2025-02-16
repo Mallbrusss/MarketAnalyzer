@@ -29,7 +29,7 @@ func InitDB(host, user, password, dBname, port string) (*gorm.DB, error) {
 		time.Sleep(retryInterval)
 	}
 
-	db.AutoMigrate(&models.HistoricCandle{}, &models.High{}, &models.Low{}, &models.Close{}, &models.Open{})
+	err = db.AutoMigrate(&models.HistoricCandle{}, &models.High{}, &models.Low{}, &models.Close{}, &models.Open{})
 	if err != nil {
 		log.Println("error migrate Candle table")
 	}
