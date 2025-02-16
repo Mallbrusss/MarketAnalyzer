@@ -64,9 +64,9 @@ func (s *Server) registerRoutes() {
 	service := services.NewTinkoffService(s.cfg, s.kafkaBroker)
 	handler := handlers.NewHandler(service)
 
-	s.e.GET("/api/v1/getClosePrices", handler.GetClosePricesHandler)
-	s.e.GET("/api/v1/getBonds", handler.GetAllBonds)
-	s.e.GET("/api/v1/getCandles", handler.GetCandles)
+	s.e.GET("/api/v1/ti/getClosePrices", handler.GetClosePricesHandler)
+	s.e.GET("/api/v1/ti/getBonds", handler.GetAllBonds)
+	s.e.GET("/api/v1/ti/getCandles", handler.GetCandles)
 
 	log.Printf("Server is running on port %s...", s.cfg.ServerPort)
 }

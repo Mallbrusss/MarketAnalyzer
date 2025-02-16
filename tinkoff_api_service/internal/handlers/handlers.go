@@ -75,7 +75,7 @@ func (h *Handler) GetCandles(c echo.Context) error {
 		})
 	}
 
-	instumentInfo := map[string]any{
+	instrumentInfo := map[string]any{
 		"figi":         req.Figi,
 		"from":         req.From,
 		"to":           req.To,
@@ -83,13 +83,13 @@ func (h *Handler) GetCandles(c echo.Context) error {
 		"instrumentId": req.InstrumentId,
 	}
 
-	candles, err := h.Service.GetCandles(instumentInfo)
+	candles, err := h.Service.GetCandles(instrumentInfo)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"error": "Failed to fetch all candles",
 		})
 	}
-	
+
 	return c.JSON(http.StatusOK, echo.Map{
 		"candles": candles,
 	})

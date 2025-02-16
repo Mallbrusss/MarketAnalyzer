@@ -4,8 +4,10 @@ import "time"
 
 type GetCandlesRequest struct {
 	Figi string `json:"figi"`
+	// From: example: "2025-02-16T17:33:53.311Z"
 	From string `json:"from"`
-	To   string `json:"to"`
+	// To: example: "2025-02-16T17:33:53.311Z"
+	To string `json:"to"`
 	// CANDLE_INTERVAL_UNSPECIFIED Интервал не определён.
 	//
 	// CANDLE_INTERVAL_1_MIN от 1 минуты до 1 дня.
@@ -68,5 +70,5 @@ type Open struct {
 }
 
 type GetCandlesResponse struct {
-	Candles      []HistoricCandle `json:"candles"`
+	Candles []HistoricCandle `json:"candles"`
 }

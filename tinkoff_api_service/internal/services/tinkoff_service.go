@@ -131,7 +131,7 @@ func (s *TinkoffService) GetCandles(instrumentInfo map[string]any) ([]models.His
 		return nil, err
 	}
 
-	responce, data, err := s.fixeRespBody(respBody, reqBody.InstrumentId)
+	response, data, err := s.fixeRespBody(respBody, reqBody.InstrumentId)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (s *TinkoffService) GetCandles(instrumentInfo map[string]any) ([]models.His
 		log.Printf("Sending chunk %d, size: %d bytes", num+1, len(chunk))
 	}
 
-	return responce.Candles, nil
+	return response.Candles, nil
 }
 
 func (s *TinkoffService) fixeRespBody(respBody []byte, instrumentID string) (models.GetCandlesResponse, []byte, error) {

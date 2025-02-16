@@ -11,7 +11,7 @@ info:
 #     description: Продакшен сервер
 
 paths:
-  /api/v1/getClosePrices:
+  /api/v1/ti/getClosePrices:
     get:
       summary: Получить цены закрытия по инструментам
       description: Метод возвращает цены закрытия торговой сессии для заданных инструментов.
@@ -86,7 +86,7 @@ paths:
           description: Некорректный запрос.
         '500':
           description: Ошибка сервера.
-  /api/v1/getBonds:
+  /api/v1/ti/getBonds:
     get:
       summary: Получить все котировки облигаций
       description: Метод возвращает данные о всех облигациях.
@@ -109,7 +109,7 @@ paths:
           description: Отказано в доступе. Необходим токен авторизации.
         '500':
           description: Ошибка сервера.
-  /api/v1/getCandles:
+  /api/v1/ti/getCandles:
     get:
       summary: Получить все котировки облигаци за промежуток
       description: Метод возвращает все котировки свечей за указанный промежуток времени с указанным интервалом (см документацию).
