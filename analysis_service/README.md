@@ -29,13 +29,13 @@ Analysis Service - это аналитический сервис, предна�
 [//]: # (P_{default} = \alpha_1 H + \alpha_2 RSI + \alpha_3 SMA + \alpha_4 St + \alpha_5 P)
 
 [//]: # ($$)
-![](https://latex.codecogs.com/svg.image?&space;P_{default}=\alpha_1&space;H&plus;\alpha_2&space;RSI&plus;\alpha_3&space;SMA&plus;\alpha_4&space;St&plus;\alpha_5&space;P)
+![](https://latex.codecogs.com/svg.image?{\color{Red}P_{default}=\alpha_1&space;H&plus;\alpha_2&space;RSI&plus;\alpha_3&space;SMA&plus;\alpha_4&space;St&plus;\alpha_5&space;P})
 
 где:
 * H — фрактальная характеристика,
 * RSI — относительная сила индикатора,
 * SMA — скользящая средняя,
 * St — новостные настроения,
-* $$ P_{political} - политическая модель  $$
-* $$ \alpha_1,\alpha_2,\alpha_3,\alpha_4,\alpha_5 — коэффициенты, \ оцениваемые \ методом \
-наименьших \ квадратов \ или \ другими \ методами \ оптимизации. $$
+* ![](https://latex.codecogs.com/svg.image?{\color{Red}P_{political}})
+* ![](https://latex.codecogs.com/svg.image?{\color{Red}\alpha_1,\alpha_2,\alpha_3,\alpha_4,\alpha_5}) — коэффициенты, \ оцениваемые \ методом \
+наименьших \ квадратов \ или \ другими \ методами \ оптимизации. 
