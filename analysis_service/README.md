@@ -24,9 +24,13 @@ Analysis Service - это аналитический сервис, предна�
 
 Линейная модель определяется следующим уравнением:
 
-$$
-P_{default} = \alpha_1 H + \alpha_2 RSI + \alpha_3 SMA + \alpha_4 St + \alpha_5 P
-$$
+[//]: # ($$)
+
+[//]: # (P_{default} = \alpha_1 H + \alpha_2 RSI + \alpha_3 SMA + \alpha_4 St + \alpha_5 P)
+
+[//]: # ($$)
+![](https://latex.codecogs.com/svg.image?&space;P_{default}=\alpha_1&space;H&plus;\alpha_2&space;RSI&plus;\alpha_3&space;SMA&plus;\alpha_4&space;St&plus;\alpha_5&space;P)
+
 где:
 * H — фрактальная характеристика,
 * RSI — относительная сила индикатора,
