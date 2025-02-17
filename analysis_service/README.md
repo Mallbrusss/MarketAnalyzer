@@ -31,12 +31,12 @@ Analysis Service - это аналитический сервис, предна�
 [//]: # ($$)
 ![](https://latex.codecogs.com/svg.image?{\color{Red}P_{default}=\alpha_1&space;H&plus;\alpha_2&space;RSI&plus;\alpha_3&space;SMA&plus;\alpha_4&space;St&plus;\alpha_5&space;P})
 
-где:
+Где:
 * H — фрактальная характеристика,
 * RSI — относительная сила индикатора,
 * SMA — скользящая средняя,
 * St — новостные настроения,
-* ![](https://latex.codecogs.com/svg.image?{\color{Red}P_{political}})  - политические настроения.
+* ![](https://latex.codecogs.com/svg.image?{\color{Red}P_{political}}) - политические настроения.
 * ![](https://latex.codecogs.com/svg.image?{\color{Red}\alpha_1,\alpha_2,\alpha_3,\alpha_4,\alpha_5}) — коэффициенты, 
 оцениваемые методом наименьших квадратов или другими методами оптимизации. 
 
